@@ -21,7 +21,7 @@ class Player:
     def __init__(self, die, is_computer=False ):
         self._die = die
         self._is_computer = is_computer
-        self._counter = 10
+        self._counter = 0
 
     @property
     def die(self):
@@ -36,10 +36,8 @@ class Player:
         return self._counter
     
     def increment_counter(self):
-        self._counter += 1
+        self._counter += 3
 
-    def decrement_counter(self):
-        self._counter -= 1
 
     def roll_die(self):
         return self._die.roll()
@@ -55,17 +53,16 @@ class DiceGame:
         print(":::::::::::::::::::::::::::::::::::::::::")
         print("🎲 Welcome to Roll the Dice!")
         print(":::::::::::::::::::::::::::::::::::::::::")
+        no_of_rounds = int(input("Enter number of rounds to play : "))
 
-        while True:
+        for i in range(no_of_rounds):
+            self.print_round_welcome(i+1)
             self.play_round()
-            game_over = self.check_game_over()
-            if game_over:
-                break
+        
+        self.check_game_over()
 
 
     def play_round(self):
-        # Welcome the user
-        self.print_round_welcome()
 
         # Roll the dice
         
@@ -77,10 +74,10 @@ class DiceGame:
 
         # Determine winner and Loser
         if player_value > computer_value:
-            self.update_counter(winner=self._player, loser=self._computer)
+            self.update_counter(winner=self._player)
             print("You won the round. 😁")
         elif computer_value > player_value:
-            self.update_counter(winner=self._computer, loser=self._player)
+            self.update_counter(winner=self._computer)
             print("Computer has won this round. Try again. 😢")
         else:
             print("Its a tie. 😊")
@@ -89,34 +86,39 @@ class DiceGame:
         self.show_counters()
         
 
-    def print_round_welcome(Self):
-        print("---------- New Round ----------")
+    def print_round_welcome(self, round_no):
+        print(f"---------- Round {round_no} ----------")
         input("🎲 Press any key to roll the dice.🎲")
 
     def show_dice(self, player_value, computer_value):
         print(f"Your Die  : {player_value}")
         print(f"Computer Die : {computer_value}")
 
-    def update_counter(self, winner, loser):
-        winner.decrement_counter()
-        loser.increment_counter()
+    def update_counter(self, winner):
+        winner.increment_counter()
 
     def show_counters(self):
         print(f"Your counter : {self._player.counter}")
         print(f"Computer counter : {self._computer.counter}")
 
     def check_game_over(self):
-        if self._player.counter == 0:
+        if self._player.counter > self._computer.counter :
             self.show_game_over(self._player)
             return True
-        elif self._computer.counter == 0:
+        elif self._computer.counter > self._player.counter:
             self.show_game_over(self._computer)
             return True
         else:
+            self.show_game_over(tie=True)
             return False
         
-    def show_game_over(self, winner):
-        if winner.is_computer:
+    def show_game_over(self, winner=None,tie=False):
+        if tie == True:
+            print("\n:::::::::::::::::::::::::::::::::::::::\n")
+            print(" G A M E  O V E R ")
+            print(" IT'S a T I E ..... ")
+            print("\n:::::::::::::::::::::::::::::::::::::::\n")
+        elif winner.is_computer:
             print("\n:::::::::::::::::::::::::::::::::::::::")
             print(" G A M E  O V E R ")
             print("The Computer won the game !! Sorry 😢")
