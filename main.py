@@ -18,14 +18,24 @@ class Die:
 
 class Player:
 
-    def __init__(self, die, is_computer=False ):
-        self._die = die
+    def __init__(self, name, is_computer):
+        self._die_value = None
+        self._name = name
         self._is_computer = is_computer
         self._counter = 0
 
+
     @property
-    def die(self):
-        return self._die
+    def name(self):
+        return self._name
+
+    @property
+    def die_value(self):
+        return self._die_value
+    
+    @die_value.setter
+    def die_value(self, new_value):
+        self._die_value = new_value
     
     @property
     def is_computer(self):
@@ -35,28 +45,50 @@ class Player:
     def counter(self):
         return self._counter
     
-    def increment_counter(self):
-        self._counter += 3
+    def increment_counter(self, value):
+        self._counter += value
 
-
-    def roll_die(self):
-        return self._die.roll()
 
 
 class DiceGame:
 
-    def __init__(self, player, computer):
-        self._player = player
-        self._computer = computer
+    def __init__(self):
+        self._players = []
+    
+    @property
+    def players(self):
+        return self._players
+
+    
+    def generate_players(self):
+
+        player_count = int(input("Enter the no. of players to play : "))
+
+        while player_count < 2:
+            print("Player should be more than 2 !!!!!!!!! ")
+            player_count = int(input("Enter the no. of players to play : "))
+        
+        for i in range(player_count):
+            print(f"-------- Player {i+1} --------")
+            name = input("Enter ur name : ")
+            ans = input("Are u computer ? 'Y' for yes 'N' for no ").capitalize()[0]
+            is_computer = (ans == 'Y')
+
+            self._players.append(Player(name, is_computer))
+            
+
 
     def play(self):
         print("\n:::::::::::::::::::::::::::::::::::::::::")
         print("🎲 Welcome to Roll the Dice!")
         print(":::::::::::::::::::::::::::::::::::::::::\n")
+
+        self.generate_players()
+
         no_of_rounds = int(input("Enter number of rounds to play : "))
 
         self.recursive_play(no_of_rounds)
-        self.check_game_over()
+        self.show_final_leaderboard()
 
     def recursive_play(self, no_of_rounds):
         if no_of_rounds == 0:
@@ -70,30 +102,75 @@ class DiceGame:
         self.print_round_welcome(round_no)
 
         # Roll the dice
+        round_die_values = self.roll_dice()
+
+        # Calculate scores : 
+        self.calculate_score(round_die_values)
+
+        # Current Round Values
+        self.print_round_die_value(round_die_values)
+
+        # show winner 
+        self.show_round_winner(round_die_values)
+
         
-        player_value = self._player.roll_die()
-        computer_value = self._computer.roll_die()
-
-        # Show the values
-        self.show_dice(player_value, computer_value)
-
-        # Determine winner and Loser
-        if player_value > computer_value:
-            self.update_counter(winner=self._player)
-            print("You won the round. 😁")
-        elif computer_value > player_value:
-            self.update_counter(winner=self._computer)
-            print("Computer has won this round. Try again. 😢")
-        else:
-            print("Its a tie. 😊")
-
-        # Show counter
-        self.show_counters()
         
+
+    def roll_dice(self):
+
+        dice = Die()
+        round_die_values = {}
+
+        for player in self.players: 
+            if player.is_computer == False:
+                print(f"\nPlayer : {player.name}")
+                choice = input("Do u want to play ur dice ? Enter 'Y' for yes 'N' for no. ").capitalize()[0]
+                if (choice != 'Y'):
+                    return
+                
+            else:
+                print(f"\nComputer : {player.name}")
+            print(f"\nPlaying {player.name}'s die ... ")
+            player.die_value = dice.roll()
+            round_die_values[player] = dice.value
+                
+        return round_die_values
+
+    def print_round_die_value(self, round_die_values):
+        print("\n------------- Current round score ------------- \n")
+        for person in round_die_values.keys():
+            print(f"{person.name} die value : {round_die_values[person]} ")
+
+    def calculate_score(self, round_die_values):
+        # round_die_values_sorted = dict(sorted(round_die_values.items(), key=lambda item: item[1]))
+
+        for player,value in round_die_values.items():
+            player.increment_counter(value)
+    
+    def show_round_winner(self, round_die_values):
+        round_die_values_sorted = dict(sorted(round_die_values.items(), key=lambda item: item[1],reverse=True))
+
+        winners = []
+        top_die_value = 0
+        
+        # multiple winners
+        for player,value in (round_die_values_sorted.items()):
+            if top_die_value > value:
+                break
+            top_die_value = value
+            winners.append(player)
+        
+        print("The round winner are : ")
+        for winner in winners:
+            print(f"- {winner.name}")
+        print(f"With die value - {top_die_value}")
+
+    
+
 
     def print_round_welcome(self, round_no):
-        print(f"\n---------- Round {round_no} ----------")
-        input("🎲 Press any key to roll the dice.🎲\n")
+        print(f"\n----------You are entering Round {round_no} ----------")
+        # input("🎲 Press any key to roll the dice.🎲\n")
 
     def show_dice(self, player_value, computer_value):
         print(f"\nYour Die  : {player_value}")
@@ -106,33 +183,37 @@ class DiceGame:
         print(f"\nYour counter : {self._player.counter}")
         print(f"Computer counter : {self._computer.counter}\n")
 
-    def check_game_over(self):
-        if self._player.counter > self._computer.counter :
-            self.show_game_over(self._player)
-            return True
-        elif self._computer.counter > self._player.counter:
-            self.show_game_over(self._computer)
-            return True
-        else:
-            self.show_game_over(tie=True)
-            return False
+    def get_players_score(self):
+        player_scores = {}
+        for player in self._players:
+            player_scores[player.name] = player.counter
+        return player_scores
+    
         
-    def show_game_over(self, winner=None,tie=False):
-        if tie == True:
-            print("\n:::::::::::::::::::::::::::::::::::::::")
-            print(" G A M E  O V E R ")
-            print(" IT'S a T I E ..... ")
-            print(":::::::::::::::::::::::::::::::::::::::\n")
-        elif winner.is_computer:
-            print("\n:::::::::::::::::::::::::::::::::::::::")
-            print(" G A M E  O V E R ")
-            print("The Computer won the game !! Sorry 😢")
-            print(":::::::::::::::::::::::::::::::::::::::\n")
-        else:
-            print("\n:::::::::::::::::::::::::::::::::::::::")
-            print(" G A M E  O V E R ")
-            print("You won the game !!!! 😁")
-            print(":::::::::::::::::::::::::::::::::::::::\n")
+    def show_final_leaderboard(self):
+    
+        print("\n:::::::::::::::::::::::::::::::::::::::")
+        print(" G A M E  O V E R ")
+        print(":::::::::::::::::::::::::::::::::::::::\n")
+        
+        print("-----------\t H A L L  O F  F A M E \t-----------")
+
+        player_scores = self.get_players_score()
+
+        player_scores_sorted = dict(sorted(player_scores.items(), key=lambda item: item[1],reverse=True))
+
+        previous_score = None
+        position = 0
+        index = 1
+        print(f"{'Player No.':<15}{'Player Name':<20}{'Player Position':<20}{'Player Score':<15}")
+
+
+        for player,score in player_scores_sorted.items():
+            if previous_score != score:
+                position += 1
+            print(f"{index:<15}{player:<20}{position:<20}{score:<15}")
+            index += 1
+            previous_score = score
 
 
 
@@ -141,11 +222,10 @@ player_die = Die()
 computer_die = Die()
 
 # Create Players
-my_player = Player(player_die, False)
-c_player = Player(computer_die, True)
+# player_count = input("Enter ")
 
 # Create Game
-game = DiceGame(my_player, c_player)
+game = DiceGame()
 
 # Start Game
 game.play()
