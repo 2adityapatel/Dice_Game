@@ -16,6 +16,8 @@ class Die:
         return new_value
     
 
+    
+
 class Player:
 
     def __init__(self, name, is_computer):
@@ -77,15 +79,17 @@ class DiceGame:
             self._players.append(Player(name, is_computer))
             
 
-
-    def play(self):
+    def welcome_message(self):
         print("\n:::::::::::::::::::::::::::::::::::::::::")
         print("🎲 Welcome to Roll the Dice!")
         print(":::::::::::::::::::::::::::::::::::::::::\n")
 
+
+    def play(self):
+        self.welcome_message()
         self.generate_players()
 
-        no_of_rounds = int(input("Enter number of rounds to play : "))
+        no_of_rounds = int(input("\nEnter number of rounds to play : "))
 
         self.recursive_play(no_of_rounds)
         self.show_final_leaderboard()
@@ -104,11 +108,12 @@ class DiceGame:
         # Roll the dice
         round_die_values = self.roll_dice()
 
-        # Calculate scores : 
-        self.calculate_score(round_die_values)
-
         # Current Round Values
         self.print_round_die_value(round_die_values)
+
+
+        # Calculate scores : 
+        self.calculate_score(round_die_values)
 
         # show winner 
         self.show_round_winner(round_die_values)
@@ -144,44 +149,31 @@ class DiceGame:
     def calculate_score(self, round_die_values):
         # round_die_values_sorted = dict(sorted(round_die_values.items(), key=lambda item: item[1]))
 
-        for player,value in round_die_values.items():
-            player.increment_counter(value)
+        for player,score in round_die_values.items():
+            player.increment_counter(score)
     
     def show_round_winner(self, round_die_values):
         round_die_values_sorted = dict(sorted(round_die_values.items(), key=lambda item: item[1],reverse=True))
 
         winners = []
-        top_die_value = 0
+        top_score_value = 0
         
         # multiple winners
         for player,value in (round_die_values_sorted.items()):
-            if top_die_value > value:
+            if top_score_value > value:
                 break
-            top_die_value = value
+            top_score_value = value
             winners.append(player)
         
         print("The round winner are : ")
         for winner in winners:
             print(f"- {winner.name}")
-        print(f"With die value - {top_die_value}")
-
-    
+        print(f"With round score value - {top_score_value}")
 
 
     def print_round_welcome(self, round_no):
         print(f"\n----------You are entering Round {round_no} ----------")
         # input("🎲 Press any key to roll the dice.🎲\n")
-
-    def show_dice(self, player_value, computer_value):
-        print(f"\nYour Die  : {player_value}")
-        print(f"Computer Die : {computer_value}\n")
-
-    def update_counter(self, winner):
-        winner.increment_counter()
-
-    def show_counters(self):
-        print(f"\nYour counter : {self._player.counter}")
-        print(f"Computer counter : {self._computer.counter}\n")
 
     def get_players_score(self):
         player_scores = {}
@@ -216,16 +208,53 @@ class DiceGame:
             previous_score = score
 
 
+class OddDiceGame(DiceGame):
 
-# Create Die
-player_die = Die()
-computer_die = Die()
+    def calculate_score(self, round_die_values):
 
-# Create Players
-# player_count = input("Enter ")
+        for player,value in round_die_values.items():
+            if value%2 == 0:
+                round_die_values[player] = (value*10)
+            else:
+                round_die_values[player] = (value*-10)
+
+        return super().calculate_score(round_die_values)
+    
+    def welcome_message(self):
+        super().welcome_message()
+        print("\n:::::::::::::::::::::::::::::::::::::::::")
+        print("🎲 LUCKY IF YOU DONT GET ODD VALUES ")
+        print(":::::::::::::::::::::::::::::::::::::::::\n")
+
+    
+class BlackDiceGame(DiceGame):
+
+    BLACK_DIE_VALUES = [3,5]
+
+    def welcome_message(self):
+        super().welcome_message()
+        print("\n:::::::::::::::::::::::::::::::::::::::::")
+        print("🎲 BLACK DICE ☠️  ☠️  ☠️  ☠️  ☠️  ☠️ ")
+        print("Score for round is 0 if got 3 or 5 😁")
+        print(":::::::::::::::::::::::::::::::::::::::::\n")
+
+    def calculate_score(self, round_die_values):
+
+        for player,value in round_die_values.items():
+            if value in BlackDiceGame.BLACK_DIE_VALUES:
+                round_die_values[player] = 0
+            else:
+                round_die_values[player] = (value*10)
+
+        return super().calculate_score(round_die_values)
+    
+
+
 
 # Create Game
-game = DiceGame()
+# game = DiceGame()
+# game = BlackDiceGame()
+game = OddDiceGame()
 
 # Start Game
 game.play()
