@@ -167,8 +167,8 @@ class DiceGame:
         
         print("The round winner are : ")
         for winner in winners:
-            print(f"- {winner.name}")
-        print(f"With round score value - {top_score_value}")
+            print(f"=> {winner.name}")
+        print(f"With round score value = {top_score_value}")
 
 
     def print_round_welcome(self, round_no):
